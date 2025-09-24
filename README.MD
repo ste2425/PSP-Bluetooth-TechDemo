@@ -7,11 +7,20 @@ The purpose of this homebrew is to demonstrate the `PSP Bluetooth` project and h
 **Features:**
 
 - PONG demo demonstrating the use of two controllers
+
+
+
+[![Watch the video](https://img.youtube.com/vi/E2xcQoVHV1s/default.jpg)](https://youtu.be/E2xcQoVHV1s)
+
 - LED Colour demo demonstrating setting the colour of controllers which support LEDs (DualSense etc)
+
+[![Watch the video](https://img.youtube.com/vi/3fGxJrmux3g/default.jpg)](https://youtu.be/3fGxJrmux3g)
 - Vibration demo. Demonstrating the use of setting rumble including controllers which support srong and weak rumble.
 - Player LED demo. Demonstrating setting the player LED of conrollers.
 - Ping. Demonstratings pinging the ESP32 to be sure if the `PSP Bluetooth Dongle` is connected.
 - Controller type detection. Demonstrates requesting controller type and bettery information.
+
+[![Watch the video](https://img.youtube.com/vi/i-L--a_C-jo/default.jpg)](https://youtu.be/i-L--a_C-jo)
 - Enabling/disabling new connections. Demonstrates enabling new controller connections when pairing.
 
 TODO add pictures and achnowledgements and setup instructions
