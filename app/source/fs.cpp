@@ -444,7 +444,7 @@ namespace FS {
             }
             
             offset += bytesRead;
-            GUI::ProgressBar("Copying", filename.c_str(), offset, size);
+            //GUI::ProgressBar("Copying", filename.c_str(), offset, size);
         } while(offset < size);
         
         delete[] buf;

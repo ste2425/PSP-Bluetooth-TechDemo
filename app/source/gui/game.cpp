@@ -1,4 +1,4 @@
-#include "game.h"
+#include "gui.h"
 
 #include "btController.h"
 #include "btAnimations.h"
@@ -12,7 +12,7 @@
 #define BALL_WIDTH 25
 #define BALL_HEIGHT 25
 
-namespace Game {
+namespace GUI {
     static float playerOneY = (SCREEN_HEIGHT / 2) - (PADDLE_HEIGHT / 2);
     static float playerTwoY = (SCREEN_HEIGHT / 2) - (PADDLE_HEIGHT / 2);
     static float ballX = (SCREEN_WIDTH / 2) - (BALL_WIDTH / 2);
@@ -29,7 +29,7 @@ namespace Game {
         BTController::SetColour(0x00, 0x80, 0x00, 0x80);
     }
 
-    void MainLoop(float delta)
+    void MainGameLoop(float delta)
     {
             BTController::LoadControllerState();
 

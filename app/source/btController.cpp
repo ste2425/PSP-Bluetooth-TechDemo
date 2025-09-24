@@ -3,360 +3,302 @@
 #include "g2d.h"
 #include <pspkernel.h>
 #include <psprtc.h>
+#include "mutex.h"
 
 namespace BTController
 {
+
+    static SceUID command_mtx = 0;
+
     static BTCtr controllers[2];
     static BTCtr previousControllers[2];   
 
-    static uint8_t pendingColourChangeData[4];
-    static uint8_t colourChangePending = 0;
-
-    static uint8_t vibrationPending = 0;
-    static uint8_t vibrationController = 0;
-    static uint16_t vibrationDelay = 0;
-    static uint16_t vibrationDuration = 0;
-    static uint8_t vibratioWeakMagnitude = 0;
-    static uint8_t vibrationStrongMagnitude = 0;
-    static uint8_t playerLEDPending = 0;
-    static uint8_t playerLEDValue = 0;
-
-    void setPlayerLED(uint8_t controllerIndex, uint8_t ledValue) {
-        playerLEDPending = 1;
-        playerLEDValue = ledValue;
+    void init() {
+        command_mtx = sceKernelCreateMutex("serial_command_mutex", PSP_MUTEX_ATTR_FIFO, 0, nullptr);
     }
 
-    void processPlayerLED() {
-        if (playerLEDPending == 1) {    
-            playerLEDPending = 0;        
+    void deinit() {
+        sceKernelDeleteMutex(command_mtx);
+    }
 
-            pspUARTWrite(0x0C); //command byte
-            pspUARTWrite(0); //controller index byte
-            pspUARTWrite(playerLEDValue); //delay high byte
-           // Log::Error("Data in buffer before: %d\n", pspUARTAvailable());
-            //pspUARTWaitForData(10000);
+    bool isKnownError(uint8_t status, uint8_t* errorCodes, uint8_t errorCodesSize) {
+        if (errorCodes == nullptr || errorCodesSize == 0) {
+            return false;
+        }
+        for (uint8_t i = 0; i < errorCodesSize; ++i) {
+            if (status == errorCodes[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    uint8_t sendCommand(
+        uint8_t command, 
+        uint8_t* commandArguments, 
+        uint8_t commandArgumentsSize, 
+        uint8_t successResponseCode, 
+        uint8_t* knownErrorResponseCodes,
+        uint8_t knownErrorResponseCodeSize,
+        int* responseBuffer, 
+        int responseSize
+    ) {
+        sceKernelLockMutex(command_mtx, 1, nullptr);
+
+        // TODO figure out why this delay is needed
+        sceKernelDelayThread(6000);
+
+        // send command and any command arguments
+        pspUARTWrite(command);
+
+        if (commandArguments != nullptr && commandArgumentsSize != 0) {
+            for (size_t i = 0; i < commandArgumentsSize; ++i) {
+                pspUARTWrite(commandArguments[i]);
+            }
+        }
+
+        sceKernelDelayThread(6000);
+        int tries = 0;
+
+        // wait for success response code
+        int status = pspUARTRead();
+
+        while (status != successResponseCode &&
+            !isKnownError(status, knownErrorResponseCodes, knownErrorResponseCodeSize) &&
+               tries < 20) 
+        {
             sceKernelDelayThread(6000);
-            int tries = 0;
+            status = pspUARTRead();
+            tries++;
+        }
 
-        // Log::Error("Queried controller response: %d\n", recievedDataCount);
-            // it's possible weve not got all the bytes yet. Keep waiting untill we do.
-            int resp = pspUARTRead();
-            while (resp != RESPONSE_PLAYERLED_OK &&
-                resp != RESPONSE_DATA_NOT_RECIEVED &&
-                resp != RESPONSE_CONTROLLER_NOT_FOUND &&
-                tries < 40) 
-            {
-                // Log::Error("Witing for Vibration data, got: %d\n", resp);
-                sceKernelDelayThread(6000);
-                    resp = pspUARTRead();
-                    //Log::Error("Witing for controller data, got: %d\n", recievedDataCount);
-                    tries++;
-            }
-
-            if (resp == RESPONSE_PLAYERLED_OK) {
-                return;
-            }
-            if (resp == RESPONSE_DATA_NOT_RECIEVED) {
-                Log::Error("Player LED Set Failed, Not enough data\n");
-            }
-            if (resp == RESPONSE_CONTROLLER_NOT_FOUND) {
-                Log::Error("Player LED Set Failed, Missing controller\n");
-            }
-
-            if (tries >= 40) {
-              Log::Error("Too many tries\n");
-            }
-
+        if (status != successResponseCode) {
             pspUARTResetRingBuffer();
+
+            sceKernelUnlockMutex(command_mtx, 1);
+            return status;
+        }
+
+        // This comand has no extra response data
+        if (responseBuffer == nullptr || responseSize == 0) {
+            sceKernelUnlockMutex(command_mtx, 1);
+            return status;
+        }
+
+        // wait for enough data to have been recieved
+        int recievedDataCount = pspUARTAvailable();
+        tries = 0;
+
+        while (recievedDataCount < responseSize && tries < 20) 
+        {
+            sceKernelDelayThread(20000);
+            //pspUARTWaitForData(20000);
+            recievedDataCount = pspUARTAvailable();
+            tries++;
+        }
+
+        if (tries >= 20 && recievedDataCount < responseSize) {
+            pspUARTResetRingBuffer();
+            sceKernelUnlockMutex(command_mtx, 1);
+            return RESPONSE_TIMEOUT;
+        }
+
+        // Read recieved data from SIO buffer
+        for (int i = 0; i < responseSize; ++i) {
+            responseBuffer[i] = pspUARTRead();
+        }
+
+        sceKernelUnlockMutex(command_mtx, 1);
+        return status;
+    }
+
+    void setPlayerLED(uint8_t controllerIndex, uint8_t ledValue) {      
+        uint8_t commandArgs[2] = {controllerIndex, ledValue};
+
+        uint8_t response = sendCommand(
+            COMMAND_SETPLAYERLED,
+            commandArgs, 2,
+            RESPONSE_PLAYERLED_OK,
+            (uint8_t[]){RESPONSE_CONTROLLER_NOT_FOUND, RESPONSE_DATA_NOT_RECIEVED}, 2,
+            nullptr, 0
+        );
+
+        if (response != RESPONSE_PLAYERLED_OK && response != RESPONSE_CONTROLLER_NOT_FOUND) {
+            Log::Error("Failed to set player LED: %d\n", response);
         }
     }
 
     bool loadControllerInfo(uint8_t controllerIndex, ControllerInfo &info) {
+        int responseBuffer[2] = {0};
+        uint8_t responseBufferSize = 2;
+        uint8_t commandArgs[1] = {controllerIndex};
 
-            pspUARTWrite(0x0A); //command byte
-            pspUARTWrite(controllerIndex); //controller index byte
+        uint8_t response = sendCommand(
+            COMMAND_GETCONTROLLERINFO,
+            commandArgs, 1,
+            RESPONSE_INFO_OK,
+            (uint8_t[]){RESPONSE_CONTROLLER_NOT_FOUND, RESPONSE_DATA_NOT_RECIEVED}, 2,
+            responseBuffer, responseBufferSize
+        );
+
+        if (response == RESPONSE_INFO_OK) {
+            info.connected = true;
+            info.controllerModel = responseBuffer[0];
+            info.batteryLevel = responseBuffer[1];
             
-            sceKernelDelayThread(6000);
-            int tries = 0;
-
-        // Log::Error("Queried controller response: %d\n", recievedDataCount);
-            // it's possible weve not got all the bytes yet. Keep waiting untill we do.
-            int resp = pspUARTRead();
-            while (resp != RESPONSE_INFO_OK &&
-                resp != RESPONSE_DATA_NOT_RECIEVED &&
-                resp != RESPONSE_CONTROLLER_NOT_FOUND &&
-                tries < 40) 
-            {
-                Log::Error("Witing for Vibration data, got: %d\n", resp);
-                sceKernelDelayThread(6000);
-                    resp = pspUARTRead();
-                    //Log::Error("Witing for controller data, got: %d\n", recievedDataCount);
-                    tries++;
-            }
-
-            if (resp == RESPONSE_CONTROLLER_NOT_FOUND) {
-                info.connected = false;
-                info.batteryLevel = 0;
-                info.controllerModel = CONTROLLER_TYPE_None;
-
-                return true;
-            } else if (resp == RESPONSE_INFO_OK) {
-                info.connected = true;
-
-                int recievedDataCount = pspUARTAvailable();
-                tries = 0;
-
-                // Log::Error("Queried controller response: %d\n", recievedDataCount);
-                // it's possible weve not got all the bytes yet. Keep waiting untill we do.
-                while (recievedDataCount < 2 && tries < 20) 
-                {
-                    sceKernelDelayThread(20000);
-                    //pspUARTWaitForData(20000);
-                    recievedDataCount = pspUARTAvailable();
-                    //Log::Error("Witing for Controller data, got: %d, value: %d\n", recievedDataCount, pspUARTPeek(0));
-                    tries++;
-                }
-
-                if (tries >= 20) {
-                   Log::Error("Too many tries Info\n");
-                    pspUARTResetRingBuffer();
-                    return false;
-                }
-                
-                info.controllerModel = pspUARTRead();
-                info.batteryLevel = pspUARTRead();
-
-                return true;
-            } else if (resp == RESPONSE_DATA_NOT_RECIEVED) {
-                Log::Error("Info Query Failed, Not enough data\n");
-            }
-
+            return true;
+        } else if (response == RESPONSE_CONTROLLER_NOT_FOUND) {
+            info.connected = false;
+            info.batteryLevel = 0;
+            info.controllerModel = CONTROLLER_TYPE_None;
+            return true;
+        } else {
+            static char errorString[40];
+            std::snprintf(errorString, 40, "Failed to get controller info: %d\n", response);
+            Log::Error(errorString);
             return false;
+        }
+    }
+
+    void loadControllerStateChange(uint8_t controllerIndex) {
+        previousControllers[controllerIndex] = controllers[controllerIndex];
     }
     
-    void loadControllerData(uint8_t controllerIndex) {     
-        pspUARTResetRingBuffer();   
-        previousControllers[controllerIndex] = controllers[controllerIndex];
+    void loadControllerData(uint8_t controllerIndex) {    
 
-        //Log::Error("Loading Controller For, %d, x: %d\n", controllerIndex, pspUARTPeek(0));
-        pspUARTWrite(0x03);
-        pspUARTWrite(controllerIndex);
-        //Log::Error("Data Bro, %d\n", pspUARTPeek(0));
+        int responseBuffer[9] = {0};
+        uint8_t responseBufferSize = 9;
+        uint8_t commandArgs[1] = {controllerIndex};
 
-       // pspUARTWaitForData(20000);
-        sceKernelDelayThread(20000);
-        int recievedDataCount = pspUARTAvailable();
-        int tries = 0;
+        uint8_t response = sendCommand(
+            COMMAND_LOADCONTROLLERDATA,
+            commandArgs, 1,
+            RESPONSE_CONTROLLERDATA_OK,
+            (uint8_t[]){RESPONSE_CONTROLLER_NOT_FOUND, RESPONSE_DATA_NOT_RECIEVED}, 2,
+            responseBuffer, responseBufferSize
+        );
 
-       // Log::Error("Queried controller response: %d\n", recievedDataCount);
-        // it's possible weve not got all the bytes yet. Keep waiting untill we do.
-        while (recievedDataCount < 10 && tries < 20) 
-        {
-            sceKernelDelayThread(20000);
-                //pspUARTWaitForData(20000);
-                recievedDataCount = pspUARTAvailable();
-                //Log::Error("Witing for Controller data, got: %d, value: %d\n", recievedDataCount, pspUARTPeek(0));
-                tries++;
-        }
+        if (response == RESPONSE_CONTROLLERDATA_OK) {
+            controllers[controllerIndex].connected = true;
+            controllers[controllerIndex].index = controllerIndex;
+            controllers[controllerIndex].analogRX = responseBuffer[0];
+            controllers[controllerIndex].analogRY = responseBuffer[1];
+            controllers[controllerIndex].analogLX = responseBuffer[2];
+            controllers[controllerIndex].analogLY = responseBuffer[3];
+            controllers[controllerIndex].dpad = responseBuffer[4];
+            controllers[controllerIndex].buttons = responseBuffer[5] << 8;
+            controllers[controllerIndex].buttons |= responseBuffer[6];
+            controllers[controllerIndex].miscButtons = responseBuffer[7] << 8;
+            controllers[controllerIndex].miscButtons |= responseBuffer[8];
 
-        // TODO clear buffer if tries reaches max
-        if (tries >= 20) {
-           Log::Error("Too many tries Controller\n");
-            pspUARTResetRingBuffer();
             return;
         }
 
-        auto status = pspUARTRead();
-
-        if (status == 0xA || status == 0xB) {
-            controllers[controllerIndex].connected = false;
-        }
-
-        if (status == 0xC) {
-            controllers[controllerIndex].connected = true;
-            controllers[controllerIndex].index = controllerIndex;
-            controllers[controllerIndex].analogRX = pspUARTRead();
-            controllers[controllerIndex].analogRY = pspUARTRead();
-            controllers[controllerIndex].analogLX = pspUARTRead();
-            controllers[controllerIndex].analogLY = pspUARTRead();
-            controllers[controllerIndex].dpad = pspUARTRead();
-            controllers[controllerIndex].buttons = pspUARTRead() << 8;
-            controllers[controllerIndex].buttons |= pspUARTRead();
-            controllers[controllerIndex].miscButtons = pspUARTRead() << 8;
-            controllers[controllerIndex].miscButtons |= pspUARTRead();
-
-            /*Log::Error("Controller %d, LX: %d, LY: %d, RX: %d, RY: %d, DPad: %d, Buttons: 0x%04X, Misc: 0x%04X\n", 
-                controllerIndex,
-                controllers[controllerIndex].analogLX,
-                controllers[controllerIndex].analogLY,
-                controllers[controllerIndex].analogRX,
-                controllers[controllerIndex].analogRY,
-                controllers[controllerIndex].dpad,
-                controllers[controllerIndex].buttons,
-                controllers[controllerIndex].miscButtons);*/
-        }
-        //Log::Error("Processing done\n");
-
-       // controllers[controllerIndex] = controllerData;
+        controllers[controllerIndex].connected = false;
     }   
 
-    void loadControllerVibration() {
-        if (vibrationPending == 1) {    
-            vibrationPending = 0;        
-
-            pspUARTWrite(0x09); //command byte
-            pspUARTWrite(vibrationController); //controller index byte
-            pspUARTWrite((vibrationDelay >> 8) & 0xFF); //delay high byte
-            pspUARTWrite(vibrationDelay & 0xFF); //delay low byte
-            pspUARTWrite((vibrationDuration >> 8) & 0xFF); //duration high byte
-            pspUARTWrite(vibrationDuration & 0xFF); //duration low byte
-            pspUARTWrite(vibratioWeakMagnitude); //weak magnitude byte
-            pspUARTWrite(vibrationStrongMagnitude); //strong magnitude byte
-           // Log::Error("Data in buffer before: %d\n", pspUARTAvailable());
-            //pspUARTWaitForData(10000);
-            sceKernelDelayThread(6000);
-            int tries = 0;
-
-        // Log::Error("Queried controller response: %d\n", recievedDataCount);
-            // it's possible weve not got all the bytes yet. Keep waiting untill we do.
-            int resp = pspUARTRead();
-            while (resp != RESPONSE_VIBRATE_OK &&
-                resp != RESPONSE_DATA_NOT_RECIEVED &&
-                resp != RESPONSE_CONTROLLER_NOT_FOUND &&
-                tries < 40) 
-            {
-                // Log::Error("Witing for Vibration data, got: %d\n", resp);
-                sceKernelDelayThread(6000);
-                    resp = pspUARTRead();
-                    //Log::Error("Witing for controller data, got: %d\n", recievedDataCount);
-                    tries++;
-            }
-
-            if (resp == RESPONSE_VIBRATE_OK) {
-                return;
-            }
-            if (resp == RESPONSE_DATA_NOT_RECIEVED) {
-                Log::Error("Vibration Set Failed, Not enough data\n");
-            }
-            if (resp == RESPONSE_CONTROLLER_NOT_FOUND) {
-                Log::Error("Vibration Set Failed, Missing controller\n");
-            }
-
-            if (tries >= 40) {
-              Log::Error("Too many tries\n");
-            }
-
-            pspUARTResetRingBuffer();
-        }
-    }
-
     bool enablePairing() {
-        pspUARTWrite(0x04); //command byte
-        //pspUARTWaitForData(10000);
-        sceKernelDelayThread(6000);
-        int tries = 0;
+        uint8_t response = sendCommand(
+            COMMAND_ENABLENEWCONNECTIONS,
+            nullptr, 0,
+            RESPONSE_NEWCON_OK,
+            nullptr, 0,
+            nullptr, 0
+        );   
 
-    // Log::Error("Queried controller response: %d\n", recievedDataCount);
-        // it's possible weve not got all the bytes yet. Keep waiting untill we do.
-        int resp = pspUARTRead();
-        while (resp != RESPONSE_NEWCON_OK &&
-            tries < 40) 
-        {
-            // Log::Error("Witing for Vibration data, got: %d\n", resp);
-            sceKernelDelayThread(6000);
-                resp = pspUARTRead();
-                //Log::Error("Witing for controller data, got: %d\n", recievedDataCount);
-                tries++;
-        }
-
-        if (resp == RESPONSE_NEWCON_OK) {
-            return true;
-        }
-
-        return false;
+        return response == RESPONSE_NEWCON_OK;
     }
 
     bool disablePairing() {
-        pspUARTWrite(0x05); //command byte
-        //pspUARTWaitForData(10000);
-        sceKernelDelayThread(6000);
-        int tries = 0;
+        uint8_t response = sendCommand(
+            COMMAND_DISABLENEWCONNECTIONS,
+            nullptr, 0,
+            RESPONSE_DISNEWCON_OK,
+            nullptr, 0,
+            nullptr, 0
+        );   
 
-    // Log::Error("Queried controller response: %d\n", recievedDataCount);
-        // it's possible weve not got all the bytes yet. Keep waiting untill we do.
-        int resp = pspUARTRead();
-        while (resp != RESPONSE_DISNEWCON_OK &&
-            tries < 40) 
-        {
-            // Log::Error("Witing for Vibration data, got: %d\n", resp);
-            sceKernelDelayThread(6000);
-                resp = pspUARTRead();
-                //Log::Error("Witing for controller data, got: %d\n", recievedDataCount);
-                tries++;
-        }
-
-        if (resp == RESPONSE_DISNEWCON_OK) {
-            return true;
-        }
-
-        return false;
+        return response == RESPONSE_DISNEWCON_OK;
     }
 
-    void loadControllerColour() {
-        if (colourChangePending == 1) {    
-            //Log::Error("Setting LED colour\n");
-            colourChangePending = 0;        
+    uint8_t ping() {
+        uint8_t response = sendCommand(
+            COMMAND_PING,
+            nullptr, 0,
+            RESPONSE_PING,
+            (uint8_t[]){RESPONSE_CONTROLLER_NOT_FOUND, RESPONSE_DATA_NOT_RECIEVED}, 2,
+            nullptr, 0
+        ); 
 
-            pspUARTWrite(0x07); //command byte
-            pspUARTWrite(pendingColourChangeData[0]); //controller index byte
-            pspUARTWrite(pendingColourChangeData[1]); //R byte
-            pspUARTWrite(pendingColourChangeData[2]); //G byte
-            pspUARTWrite(pendingColourChangeData[3]); //B byte
+        return response;
+    }
 
-           // Log::Error("Data in buffer before: %d\n", pspUARTAvailable());
-            //pspUARTWaitForData(10000);
-            sceKernelDelayThread(6000);
-            int tries = 0;
+    void SetVibration(uint8_t controllerIndex, uint8_t weakMagnitude, uint8_t strongMagnitude, uint16_t delayMs, uint16_t durationMs)
+    {
+        uint8_t responseBufferSize = 2;
+        uint8_t commandArgs[7] = {
+            controllerIndex,
+            (delayMs >> 8) & 0xFF, //Delay high byte
+            delayMs & 0xFF, //Delay low byte
+            (durationMs >> 8) & 0xFF, //Duration high byte
+            durationMs & 0xFF, //Duration low byte
+            weakMagnitude,
+            strongMagnitude
+        };
 
-        // Log::Error("Queried controller response: %d\n", recievedDataCount);
-            // it's possible weve not got all the bytes yet. Keep waiting untill we do.
-            int resp = pspUARTRead();
-            while (resp != 0xD &&
-                resp != 0xA &&
-                resp != 0xC &&
-                tries < 40) 
-            {
-               // Log::Error("Witing for LED data, got: %d\n", resp);
-            sceKernelDelayThread(6000);
-                resp = pspUARTRead();
-                //Log::Error("Witing for controller data, got: %d\n", recievedDataCount);
-                tries++;
-            }
+        uint8_t response = sendCommand(
+            COMMAND_SETVIBRATION,
+            commandArgs, 7,
+            RESPONSE_VIBRATE_OK,
+            (uint8_t[]){RESPONSE_CONTROLLER_NOT_FOUND, RESPONSE_DATA_NOT_RECIEVED}, 2,
+            nullptr, 0
+        );   
 
-            if (resp == 0xD) {
-                return;
-            }
-            if (resp == 0xA) {
-                Log::Error("LED Set Failed, Not enough data\n");
-            }
-            if (resp == 0xB) {
-                Log::Error("LED Set Failed, Missing controller\n");
-            }
+        if (response == RESPONSE_VIBRATE_OK) {
+            return;
+        }
+        if (response == RESPONSE_DATA_NOT_RECIEVED) {
+            Log::Error("Vibration Set Failed, Not enough data\n");
+        }
+        if (response == RESPONSE_CONTROLLER_NOT_FOUND) {
+            Log::Error("Vibration Set Failed, Missing controller\n");
+        }
+    }
 
-            if (tries >= 40) {
-              Log::Error("Too many tries\n");
-            }
+    void SetColour(uint8_t controllerIndex, uint8_t red, uint8_t green, uint8_t blue)
+    {
+        if (controllerIndex >= 2) {
+            return; // Invalid controller index
+        }
+        
+        uint8_t commandArgs[4] = {
+            controllerIndex,
+            red,
+            green,
+            blue
+        };
 
-            pspUARTResetRingBuffer();
+        uint8_t response = sendCommand(
+            COMMAND_SETLEDCOLOUR,
+            commandArgs, 4,
+            RESPONSE_LED_OK,
+            (uint8_t[]){RESPONSE_CONTROLLER_NOT_FOUND, RESPONSE_DATA_NOT_RECIEVED}, 2,
+            nullptr, 0
+        );
+
+        if (response == RESPONSE_LED_OK) {
+            return;
+        }
+        if (response == RESPONSE_DATA_NOT_RECIEVED) {
+            Log::Error("LED Set Failed, Not enough data\n");
+        }
+        if (response == RESPONSE_CONTROLLER_NOT_FOUND) {
+            Log::Error("LED Set Failed, Missing controller\n");
         }
     }
 
     void LoadControllerState()
-    {
-        loadControllerColour();
-        loadControllerVibration();
-        processPlayerLED();
-        
+    {        
         loadControllerData(0);
         loadControllerData(1);
     }
@@ -463,62 +405,5 @@ namespace BTController
         }
         
         return controllers[controllerIndex].connected;
-    }
-
-    int IsPending() {
-        return colourChangePending;
-    }
-
-    bool ping() {       
-        pspUARTWrite(0x02); //command byte
-        //pspUARTWaitForData(10000);
-        sceKernelDelayThread(6000);
-        int tries = 0;
-
-    // Log::Error("Queried controller response: %d\n", recievedDataCount);
-        // it's possible weve not got all the bytes yet. Keep waiting untill we do.
-        int resp = pspUARTRead();
-        while (resp != RESPONSE_PING &&
-            tries < 40) 
-        {
-            // Log::Error("Witing for Vibration data, got: %d\n", resp);
-            sceKernelDelayThread(6000);
-                resp = pspUARTRead();
-                //Log::Error("Witing for controller data, got: %d\n", recievedDataCount);
-                tries++;
-        }
-
-        if (resp == RESPONSE_PING) {
-            return true;
-        }
-
-        return false;
-    }
-
-    void SetVibration(uint8_t controllerIndex, uint8_t weakMagnitude, uint8_t strongMagnitude, uint16_t delayMs, uint16_t durationMs)
-    {
-        if (controllerIndex >= 2) {
-            return; // Invalid controller index
-        }
-
-        vibrationPending = 1;
-        vibrationController = controllerIndex;
-        vibratioWeakMagnitude = weakMagnitude;
-        vibrationStrongMagnitude = strongMagnitude;
-        vibrationDelay = delayMs;
-        vibrationDuration = durationMs;
-    }
-
-    void SetColour(uint8_t controllerIndex, uint8_t red, uint8_t green, uint8_t blue)
-    {
-        if (controllerIndex >= 2) {
-            return; // Invalid controller index
-        }
-
-        colourChangePending = 1;
-        pendingColourChangeData[0] = controllerIndex;
-        pendingColourChangeData[1] = red;
-        pendingColourChangeData[2] = green;
-        pendingColourChangeData[3] = blue;
     }
 }

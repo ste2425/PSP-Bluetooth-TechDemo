@@ -9,13 +9,6 @@ extern "C" {
 
 // Kernel function prototypes
 
-// audio_driver functions
-extern int pspAudioSetFrequency(int frequency);
-
-// display_driver functions
-extern int pspDisplayEnable(void);
-extern int pspDisplayDisable(void);
-
 // fs_driver functions
 extern int pspIoOpenDir(const char *dirname);
 extern int pspIoReadDir(SceUID dir, SceIoDirent *dirent);

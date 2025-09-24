@@ -1,11 +1,5 @@
 #include "kernel_functions.h"
 
-// audio_driver functions
-int pspAudioSetFrequency(int frequency);
-
-// display driver functions
-int pspDisplayEnable(void);
-int pspDisplayDisable(void);
 
 // fs_driver functions
 int pspIoOpenDir(const char *dirname);

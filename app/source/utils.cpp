@@ -36,8 +36,6 @@ namespace Utils {
     };
     
     static std::vector<Module> kernelModules {
-        { "audio_driver.prx", -1 },
-        { "display_driver.prx", -1 },
         { "fs_driver.prx", -1 },
         { "sio_driver.prx", -1 }
     };

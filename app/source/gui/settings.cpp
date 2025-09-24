@@ -39,11 +39,11 @@ namespace GUI {
 
     static void ControlFTPSettings(void) {
         if (Utils::IsButtonPressed(PSP_CTRL_CANCEL)) {
-            Net::ExitFTP();
+           // Net::ExitFTP();
             settings_state = GENERAL_SETTINGS;
             
             if (screenDisabled) {
-                pspDisplayEnable();
+                //pspDisplayEnable();
             }
         }
 
@@ -51,10 +51,10 @@ namespace GUI {
             screenDisabled = !screenDisabled;
 
             if (screenDisabled) {
-                pspDisplayDisable();
+                //pspDisplayDisable();
             }
             else {
-                pspDisplayEnable();
+                //pspDisplayEnable();
             }
         }
 
@@ -163,7 +163,7 @@ namespace GUI {
         if (Utils::IsButtonPressed(PSP_CTRL_ENTER)) {
             switch(selection) {
                 case 0:
-                    Net::InitFTP(ftpText);
+                  //  Net::InitFTP(ftpText);
                     settings_state = FTP_SETTINGS;
                     break;
                 

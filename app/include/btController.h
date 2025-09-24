@@ -38,7 +38,18 @@
 #define RESPONSE_DISCONNECT_OK 0x13
 #define RESPONSE_FORGETKEYS_OK 0x14
 #define RESPONSE_PLAYERLED_OK 0x15
+#define RESPONSE_TIMEOUT 0xFF
 
+#define COMMAND_PING 0x02
+#define COMMAND_LOADCONTROLLERDATA 0x03
+#define COMMAND_ENABLENEWCONNECTIONS 0x04
+#define COMMAND_DISABLENEWCONNECTIONS 0x05
+#define COMMAND_DISCONNECTCONTROLLER 0x06
+#define COMMAND_SETLEDCOLOUR 0x07
+#define COMMAND_SETVIBRATION 0x08
+#define COMMAND_GETCONTROLLERINFO 0x09
+#define COMMAND_FORGETBLUETOOTHKEYS 0xA
+#define COMMAND_SETPLAYERLED 0xB
 
 #define CONTROLLER_TYPE_None  -1
 #define CONTROLLER_TYPE_Unknown  0
@@ -90,7 +101,6 @@ namespace BTController {
     int IsConnected(uint8_t controllerIndex);
     void SetColour(uint8_t controllerIndex, uint8_t red, uint8_t blue, uint8_t green);
     void SetVibration(uint8_t controllerIndex, uint8_t weakMagnitude, uint8_t strongMagnitude, uint16_t delayMs, uint16_t durationMs);
-    int IsPending();
     bool loadControllerInfo(uint8_t controllerIndex, ControllerInfo &info);
     uint8_t GetAnalogRY(uint8_t controllerIndex);
     uint8_t GetAnalogRX(uint8_t controllerIndex);
@@ -101,5 +111,8 @@ namespace BTController {
     bool enablePairing();
     void setPlayerLED(uint8_t controllerIndex, uint8_t ledValue);
     bool disablePairing();
-    bool ping();
+    uint8_t ping();
+    void init();
+    void deinit();
+    void loadControllerStateChange(uint8_t controllerIndex);
 }

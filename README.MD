@@ -1,60 +1,17 @@
-# CMFileManager PSP [![C/C++ CI](https://github.com/joel16/CMFileManager-PSP/actions/workflows/c-cpp.yml/badge.svg?branch=next)](https://github.com/joel16/CMFileManager-PSP/actions/workflows/c-cpp.yml) ![Github latest downloads](https://img.shields.io/github/downloads/joel16/CMFileManager-PSP/total.svg)
+# CMFileManager PSP [![C/C++ CI](https://github.com/ste2425/PSP-Bluetooth-TechDemo/actions/workflows/c-cpp.yml/badge.svg?branch=next)](https://github.com/ste2425/PSP-Bluetooth-TechDemo/actions/workflows/c-cpp.yml) ![Github latest downloads](https://img.shields.io/github/downloads/ste2425/PSP-Bluetooth-TechDemo/total.svg)
 
-CMFileManager PSP is a PSP application built using the unofficial PSPSDK and [glib2d (modded)](https://github.com/joel16/gLib2D). The user interface in this homebrew is heavily inspired and based on the LineageOS/CM file manager. The aim of this project is to provide a stable and up to date file manager that makes use of updated tools, whilst offering a modernized and user friendly interace. CMFileManager PSP is the **only** homebrew that properly uses the 'move' function correctly for moving files/folder from one place to another. Unlike other file managers for PSP which copies a file from one place to another and then deletes it, which can take a while depending on the file size.
+PSP Bluetooth Tech Demo is a PSP application built using the unofficial PSPSDK and [glib2d (modded)](https://github.com/joel16/gLib2D). The code base for this project is based on the brilliant [CMFileManager](https://github.com/joel16/CMFileManager-PSP) project by *joel16*. It leverages the equally good SIO library from the [Operation Ditto](https://github.com/operation-ditto) project.
 
-<p align="center">
-  <img src="https://i.imgur.com/VhxiN0s.png" alt="CMFileManager-PSP"/>
-</p>
+The purpose of this homebrew is to demonstrate the `PSP Bluetooth` project and how the PSP can interface with bluetooth controllers.
 
 **Features:**
 
-- Copy files/folders.
-- Move files/folders.
-- Delete files/folders.
-- Multi file handling functions for copy/move/delete.
-- Edit text files. (Supported extensiosn include .JSON, .INI, .CFG, .LOG, .TXT and .MD)
-- File properties. (File size, creation time, modification time, access times, permissions)
-- Creating directories.
-- Renaming files/folders.
-- Image viewer (BMP, GIF - non animated, JPG/JPEG, PGM, PPM, PNG, PSG, TGA and TIFF).
-- Dark theme mode.
-- Extract metadata from homebrew (Eboots) or ISOs. (ICON0.PNG, ICON1.PMF, PIC0.PNG, PIC1.PNG, SND0.AT3)
-- Browse other drives like flah0, flash1 and UMD (if not using PSP Go).
-- Support for both ef0:/ (internal) and ms0:/ (external) drives on PSP Go.
-- Screenshots in .PNG format. Use L + R to capture a screenshot.
-- Audio Player 16-Bit short 41K - 48K Hz. (FLAC, IT, MOD, MP3, OGG, OPUS, S3M, WAV and XM)
-- FTP connection
-- Extract archives (7Z, LZMA, RAR, TAR and ZIP)
+- PONG demo demonstrating the use of two controllers
+- LED Colour demo demonstrating setting the colour of controllers which support LEDs (DualSense etc)
+- Vibration demo. Demonstrating the use of setting rumble including controllers which support srong and weak rumble.
+- Player LED demo. Demonstrating setting the player LED of conrollers.
+- Ping. Demonstratings pinging the ESP32 to be sure if the `PSP Bluetooth Dongle` is connected.
+- Controller type detection. Demonstrates requesting controller type and bettery information.
+- Enabling/disabling new connections. Demonstrates enabling new controller connections when pairing.
 
-
-**FTP Mode Instructions:**
-1. Press *START* to open settings menu and select `FTP connection`.
-3. Select a network connection when the Network dialog pops up.
-4. After it is connected successfully, a message will appear saying `FTP Connection established IP:Port`. Use an FTP client like WinSCP and enter the IP and port (1337) and make sure to use anonymous login.
-6. Once an FTP connection is established from your server, you *may* not see any folders or files. If this is the case, you can manually enter the path of the device like `ip:port/ms0:` (A real example would look something like: `127.0.0.1:1337/ms0:`)
-
-
-**Buttons:**
-
-- Press *DPAD Up* to move the cursor up.
-- Press *DPAD Right* to move the cursor down.
-- Press *DPAD Left* to position the cursor to the start of the directory.
-- Press *DPAD Right* to position the cursor to the end of the directory.
-- Press *Start* to open settings.
-- Press *Select* to open menubar.
-- Press *Triangle* to bring up file options.
-- Press *enter button (depending on your region)* to enter directory/open file.
-- Press *cancel button (depending on your region)* to go back to previous directory/menu.
-- Press *L + R* to caputre screenshot.
-- Press *Home* to display exit dialog.
-- Press *Start* on FTP mode or Audio player to disable/enable screen to save battery.
-
-
-**Image Viewer controls:**
-- L/R - Rotate anti-clockwise/clockwise
-- Up/Down - Zoom in/out
-- Select - Help menu
-- Left/Right - Previous/Next image
-- Analog stick - Position image after zoom
-- Triangle - Flip vertically
-- Square - Flip horizantally
+TODO add pictures and achnowledgements and setup instructions

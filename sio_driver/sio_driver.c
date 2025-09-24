@@ -302,14 +302,6 @@ void pspUARTHandlers() {
 	sceKernelRegisterResumeHandler(0x1F, ResumeHandler, 0);
 }
 
-
-
-
-
-int SIOTest() {
-	return 50;
-}
-
 int module_start(SceSize args, void *argp) {
 	return 0;
 }

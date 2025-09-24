@@ -13,6 +13,7 @@
 #include "kernel_functions.h"
 #include "colours.h"
 #include "btController.h"
+#include "mutex.h"
 
 PSP_MODULE_INFO("CMFileManager", 0x800, VERSION_MAJOR, VERSION_MINOR);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
@@ -20,8 +21,6 @@ PSP_HEAP_THRESHOLD_SIZE_KB(1024);
 PSP_HEAP_SIZE_KB(-2048);
 
 bool running = true;
-
-#define MODULE_NAME "BTPONG"
 
     // Power Callback handler
     /*int power_callback_handler(int unknown, int pwrflags, void *common)
@@ -81,14 +80,6 @@ namespace Services {
         font = intraFontLoad("flash0:/font/ltn8.pgf", INTRAFONT_CACHE_ALL);
         G2D::FontSetStyle(1.f, WHITE, INTRAFONT_ALIGN_LEFT);
         
-        // Font size cache
-        for (int i = 0; i < 256; i++) {
-            char character[2] = {0};
-            character[0] = i;
-            character[1] = '\0';
-            font_size_cache[i] = intraFontMeasureText(font, character);
-        }
-        
         PSP_CTRL_ENTER = Utils::GetEnterButton();
         PSP_CTRL_CANCEL = Utils::GetCancelButton();
         language = Utils::GetLanguage();
@@ -125,20 +116,17 @@ namespace Services {
     } 
 
     static int SIOThread() {
-            Log::Error("SETING UP THREAD\n");
         pspUARTInit(115200);
-            Log::Error("SETUP\n");
             
-        //while(running) {
-        //    BTController::LoadControllerState();
-        //    sceKernelDelayThread(10000);
-       // }
+        while(running) {
+            BTController::LoadControllerState();
+        sceKernelDelayThread(1000);
+        }
 
         return 0;
     }
 
     static int SIOWrapper(SceSize args, void *argp) {
-        Log::Error("Starting SIO Thread\n");
         return Services::SIOThread();
     }
     int SetupCallbacks(void) {
@@ -170,6 +158,7 @@ namespace Services {
 int main(int argc, char* argv[]) {
     Services::SetupCallbacks();
     Services::Init();
+    BTController::init();
     Services::SetupSIOThread();
     GUI::RenderLoop();
     Services::Exit();

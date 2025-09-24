@@ -1,4 +1,4 @@
-SUBDIRS = audio_driver display_driver fs_driver sio_driver app launcher
+SUBDIRS = fs_driver sio_driver app
 
 all:
 	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir; done

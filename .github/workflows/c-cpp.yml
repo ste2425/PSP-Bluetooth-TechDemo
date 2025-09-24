@@ -23,8 +23,6 @@ jobs:
     - name: Prepare artifact folder
       run: |
         mkdir -p CMFileManagerPSP
-        cp audio_driver/audio_driver.prx CMFileManagerPSP/
-        cp display_driver/display_driver.prx CMFileManagerPSP/
         cp fs_driver/fs_driver.prx CMFileManagerPSP/
         cp sio_driver/sio_driver.prx CMFileManagerPSP/
         cp app/EBOOT.PBP CMFileManagerPSP/

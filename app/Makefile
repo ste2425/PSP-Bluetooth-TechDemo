@@ -31,7 +31,7 @@ LIBS    = -lintrafont -lglib2d -lxmp -lmpg123 -lvorbisfile -lvorbis -lopusfile -
           -lpspgu -lpspvram -lpspaudio -lpsppower -lpspreg -lpspusb -lpspusbstor -lpspumd
 
 EXTRA_TARGETS    = EBOOT.PBP
-PSP_EBOOT_TITLE  = CM File Manager PSP v$(VERSION_MAJOR).$(VERSION_MINOR)$(VERSION_MICRO)
+PSP_EBOOT_TITLE  = PSP-Bluetooth-TechDemo v$(VERSION_MAJOR).$(VERSION_MINOR)$(VERSION_MICRO)
 PSP_EBOOT_ICON   = ../ICON0.PNG
 
 PSPSDK=$(shell psp-config --pspsdk-path)
