@@ -1,4 +1,4 @@
-# CMFileManager PSP [![C/C++ CI](https://github.com/ste2425/PSP-Bluetooth-TechDemo/actions/workflows/c-cpp.yml/badge.svg?branch=next)](https://github.com/ste2425/PSP-Bluetooth-TechDemo/actions/workflows/c-cpp.yml) ![Github latest downloads](https://img.shields.io/github/downloads/ste2425/PSP-Bluetooth-TechDemo/total.svg)
+# PSP Bluetooth TechDemo [![C/C++ CI](https://github.com/ste2425/PSP-Bluetooth-TechDemo/actions/workflows/c-cpp.yml/badge.svg?branch=next)](https://github.com/ste2425/PSP-Bluetooth-TechDemo/actions/workflows/c-cpp.yml) ![Github latest downloads](https://img.shields.io/github/downloads/ste2425/PSP-Bluetooth-TechDemo/total.svg)
 
 PSP Bluetooth Tech Demo is a PSP application built using the unofficial PSPSDK and [glib2d (modded)](https://github.com/joel16/gLib2D). The code base for this project is based on the brilliant [CMFileManager](https://github.com/joel16/CMFileManager-PSP) project by *joel16*. It leverages the equally good SIO library from the [Operation Ditto](https://github.com/operation-ditto) project.
 
