@@ -10,6 +10,7 @@ namespace BTController
 
     static SceUID command_mtx = 0;
 
+    static BTCtr liveControllers[2];
     static BTCtr controllers[2];
     static BTCtr previousControllers[2];   
 
@@ -162,6 +163,7 @@ namespace BTController
 
     void loadControllerStateChange(uint8_t controllerIndex) {
         previousControllers[controllerIndex] = controllers[controllerIndex];
+        controllers[controllerIndex] = liveControllers[controllerIndex];
     }
     
     void loadControllerData(uint8_t controllerIndex) {    
@@ -179,22 +181,22 @@ namespace BTController
         );
 
         if (response == RESPONSE_CONTROLLERDATA_OK) {
-            controllers[controllerIndex].connected = true;
-            controllers[controllerIndex].index = controllerIndex;
-            controllers[controllerIndex].analogRX = responseBuffer[0];
-            controllers[controllerIndex].analogRY = responseBuffer[1];
-            controllers[controllerIndex].analogLX = responseBuffer[2];
-            controllers[controllerIndex].analogLY = responseBuffer[3];
-            controllers[controllerIndex].dpad = responseBuffer[4];
-            controllers[controllerIndex].buttons = responseBuffer[5] << 8;
-            controllers[controllerIndex].buttons |= responseBuffer[6];
-            controllers[controllerIndex].miscButtons = responseBuffer[7] << 8;
-            controllers[controllerIndex].miscButtons |= responseBuffer[8];
+            liveControllers[controllerIndex].connected = true;
+            liveControllers[controllerIndex].index = controllerIndex;
+            liveControllers[controllerIndex].analogRX = responseBuffer[0];
+            liveControllers[controllerIndex].analogRY = responseBuffer[1];
+            liveControllers[controllerIndex].analogLX = responseBuffer[2];
+            liveControllers[controllerIndex].analogLY = responseBuffer[3];
+            liveControllers[controllerIndex].dpad = responseBuffer[4];
+            liveControllers[controllerIndex].buttons = responseBuffer[5] << 8;
+            liveControllers[controllerIndex].buttons |= responseBuffer[6];
+            liveControllers[controllerIndex].miscButtons = responseBuffer[7] << 8;
+            liveControllers[controllerIndex].miscButtons |= responseBuffer[8];
 
             return;
         }
 
-        controllers[controllerIndex].connected = false;
+        liveControllers[controllerIndex].connected = false;
     }   
 
     bool enablePairing() {

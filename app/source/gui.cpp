@@ -39,6 +39,8 @@ namespace GUI {
                 delta = 0.001f;
             
             Utils::ReadControls();
+            BTController::loadControllerStateChange(0);
+            BTController::loadControllerStateChange(1);
 
             g2dClear(BG_COLOUR);
 
@@ -74,8 +76,6 @@ namespace GUI {
             }
 
             g2dFlip(G2D_VSYNC);
-            BTController::loadControllerStateChange(0);
-            BTController::loadControllerStateChange(1);
         }
 
         return 0;
