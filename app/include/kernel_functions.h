@@ -32,11 +32,9 @@ void pspUARTWrite(int ch);
 void pspUARTPrint(const char *str);
 int pspUARTRead(void);
 void pspUARTTerminate();
-void pspUARTHandlers();
 void pspUARTWaitForData(unsigned int timeout);
 int pspUARTAvailable(void);
 void pspUARTResetRingBuffer();
-int pspUARTPeek(int index);
 void pspUARTWriteBuffer(const char *data, int len);
 
 #if defined (__cplusplus)

@@ -8,8 +8,6 @@ namespace GUI {
     static uint8_t highlightedDemo = 0;
 
     void DemoSelect(MainState& mainState) {
-        //BTController::LoadControllerState();
-
         G2D::FontSetStyle(2.f, TITLE_COLOUR, INTRAFONT_ALIGN_CENTER);  
         G2D::DrawText(480 / 2, 40, "Demo Select");
         int demoWidth = intraFontMeasureText(font, "Demo Select");
@@ -42,7 +40,7 @@ namespace GUI {
         
         G2D::DrawText(480 / 2, (160 - (font->texYSize - 15)) - 3, "Player No.");
 
-        if (BTController::IsButtonPressed(0, BT_BUTTON_SQUARE)) {
+        if (BTController::IsButtonPressed(0, BT_BUTTON_X)) {
             switch (highlightedDemo)
             {
                 case 0:

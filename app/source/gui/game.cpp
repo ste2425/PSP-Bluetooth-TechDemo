@@ -21,28 +21,20 @@ namespace GUI {
     static float ballVelX = 0.25f;
     static float ballVelY = 0.15f;
 
-    void setRedLED() {
-        BTController::SetColour(0x00, 0xFF, 0x00, 0x00);
-    }
-
-    void setPurpleLED() {
-        BTController::SetColour(0x00, 0x80, 0x00, 0x80);
-    }
-
-    void MainGameLoop(float delta)
+    void MainGameLoop(float delta, MainState& mainState)
     {
             BTController::LoadControllerState();
 
             // Paddle controls
-            if (BTController::IsDpadHeld(0, BT_DPAD_UP)){//Utils::IsButtonHeld(PSP_CTRL_UP)) {
+            if (BTController::IsDpadHeld(0, BT_DPAD_UP)){
                 playerOneY -= delta * 0.2f;
-            } else if (BTController::IsDpadHeld(0, BT_DPAD_DOWN)){//Utils::IsButtonHeld(PSP_CTRL_DOWN)) {
+            } else if (BTController::IsDpadHeld(0, BT_DPAD_DOWN)){
                 playerOneY += delta * 0.2f;
             }
 
-            if (BTController::IsDpadHeld(1, BT_DPAD_UP)){//Utils::IsButtonHeld(PSP_CTRL_TRIANGLE)) {
+            if (BTController::IsDpadHeld(1, BT_DPAD_UP)){
                 playerTwoY -= delta * 0.2f;
-            } else if (BTController::IsDpadHeld(1, BT_DPAD_DOWN)){//Utils::IsButtonHeld(PSP_CTRL_CROSS)) {
+            } else if (BTController::IsDpadHeld(1, BT_DPAD_DOWN)){
                 playerTwoY += delta * 0.2f;
             }
 
@@ -79,13 +71,10 @@ namespace GUI {
                 ballY <= playerOneY + PADDLE_HEIGHT &&
                 ballX >= PLAYER_ONE_X) {
                 ballX = PLAYER_ONE_X + PADDLE_WIDTH;
-                ballVelX = -ballVelX;
-                    setPurpleLED();
-                    
-                    BTAnimations::StartAnimation(0);
-                    BTController::SetVibration(0, 100, 180, 0, 200);
+                ballVelX = -ballVelX;                    
+                BTAnimations::StartAnimation(0);
+                BTController::SetVibration(0, 100, 180, 0, 200);
 
-                    //::StartAnimation(1);
                 // Add angle based on where it hit the paddle
                 float hitPos = ((ballY + BALL_HEIGHT / 2) - (playerOneY + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2);
                 ballVelY += hitPos * 0.15f;
@@ -98,8 +87,7 @@ namespace GUI {
                 ballX + BALL_WIDTH <= PLAYER_TWO_X + PADDLE_WIDTH + BALL_WIDTH) {
                 ballX = PLAYER_TWO_X - BALL_WIDTH;
                 ballVelX = -ballVelX;
-                    setRedLED();
-                    BTController::SetVibration(1, 100, 180, 0, 200);
+                BTController::SetVibration(1, 100, 180, 0, 200);
                 // Add angle based on where it hit the paddle
                 float hitPos = ((ballY + BALL_HEIGHT / 2) - (playerTwoY + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2);
                 ballVelY += hitPos * 0.15f;
@@ -117,6 +105,14 @@ namespace GUI {
             G2D::DrawRect(PLAYER_TWO_X, playerTwoY, PADDLE_WIDTH, PADDLE_HEIGHT, STATUS_BAR_COLOUR);
 
             G2D::DrawRect(ballX, ballY, BALL_WIDTH, BALL_HEIGHT, STATUS_BAR_COLOUR);
+
+
+            G2D::FontSetStyle(1.f, GREEN, INTRAFONT_ALIGN_CENTER);  
+            G2D::DrawText(480 / 2, 250, "Press START to return to menu.");
+
+            if(BTController::IsMiscPressed(0, BT_MISC_BUTTON_START)) {
+                mainState.state = MAIN_STATE_DEMO_SELECT;
+            }
 
     }
 }

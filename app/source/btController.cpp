@@ -232,7 +232,7 @@ namespace BTController
             nullptr, 0
         ); 
 
-        return response;
+        return response == RESPONSE_PING;
     }
 
     void SetVibration(uint8_t controllerIndex, uint8_t weakMagnitude, uint8_t strongMagnitude, uint16_t delayMs, uint16_t durationMs)

@@ -6,7 +6,6 @@
 
 namespace GUI {
     void ControllerVibrationDemo(MainState& mainState) {
-        //BTController::LoadControllerState();
         G2D::FontSetStyle(2.f, TITLE_COLOUR, INTRAFONT_ALIGN_CENTER);  
         G2D::DrawText(480 / 2, 40, "Vibration Demo");
 
@@ -21,7 +20,6 @@ namespace GUI {
 
         G2D::FontSetStyle(1.f, TITLE_COLOUR, INTRAFONT_ALIGN_CENTER); 
 
-        // print analog values to screen
         static char leftValue[60];
         std::snprintf(leftValue, 30, "Weak Magnitude: %d", leftAnalogY);
         G2D::DrawText(480 / 2, 180, leftValue);
@@ -33,10 +31,11 @@ namespace GUI {
         G2D::FontSetStyle(1.f, GREEN, INTRAFONT_ALIGN_CENTER);  
         G2D::DrawText(480 / 2, 250, "Press START to return to menu.");
 
-        if(BTController::IsMiscHeld(0, BT_MISC_BUTTON_START)) {
+        if(BTController::IsMiscPressed(0, BT_MISC_BUTTON_START) || BTController::IsMiscPressed(1, BT_MISC_BUTTON_START)) {
             mainState.state = MAIN_STATE_DEMO_SELECT;
         }
 
         BTController::SetVibration(0, leftAnalogY, rightAnalogY, 0, 1000);
+        BTController::SetVibration(1, leftAnalogY, rightAnalogY, 0, 1000);
     }
 }

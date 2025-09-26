@@ -65,8 +65,6 @@ void 	sceHprmReset(void);
 void 	sceHprmInit(void);
 void 	sceSysregUartIoEnable(int);
 
-int sceKernelRegisterResumeHandler(int reg, int (*handler)(int unk, void *param), void *param);
-int sceKernelRegisterSuspendHandler(int reg, int (*handler)(int unk, void *param), void *param);   
 //
 // Ring Buffer struct
 //
@@ -208,11 +206,6 @@ int pspUARTRead(void)
 	}
 }
 
-int pspUARTPeek(int index)
-{
-	return rx_buffer.buffer[rx_buffer.tail];
-}
-
 //
 // pspUARTWrite(ch)
 // Writes a character to transmit to the UART chip,
@@ -280,26 +273,6 @@ void pspUARTResetRingBuffer()
 	rx_buffer.head = 0;
 	rx_buffer.tail = 0;
 	sceKernelEnableIntr(PSP_HPREMOTE_INT);
-}
-
-int SuspendHandler(int unk, void *param)
-{
-    pspUARTTerminate();
-
-    return 0;
-}
-
-int ResumeHandler(int unk, void *param)
-{
-    pspUARTInit(115200);
-
-  return 0;
-}
-
-void pspUARTHandlers() {
-	sceKernelRegisterSuspendHandler(0x1F, SuspendHandler, 0);
-
-	sceKernelRegisterResumeHandler(0x1F, ResumeHandler, 0);
 }
 
 int module_start(SceSize args, void *argp) {

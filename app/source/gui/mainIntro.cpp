@@ -31,7 +31,8 @@ namespace GUI {
             G2D::FontSetStyle(1.f, GREEN, INTRAFONT_ALIGN_CENTER);  
             G2D::DrawText(480 / 2, 200, "ESP32 Detected!\n"
                                         "Press START to continue.");
-            if( Utils::IsButtonPressed(PSP_CTRL_START)) {
+                                        
+            if(Utils::IsButtonPressed(PSP_CTRL_START)) {
                 mainState.state = MAIN_STATE_CONROLER_SETUP;
             }
         }

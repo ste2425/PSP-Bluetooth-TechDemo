@@ -29,7 +29,7 @@ namespace GUI {
 
     void DisplayMainIntro(void);
 
-    void MainGameLoop(float delta);
+    void MainGameLoop(float delta, MainState& mainState);
 
     void ControllerLEDDemo(MainState& mainState);
 

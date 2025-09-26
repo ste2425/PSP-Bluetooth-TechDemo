@@ -42,8 +42,6 @@ namespace GUI {
             newConnectionsEnabled = 1;
         }
 
-        //BTController::LoadControllerState();
-
         if (BTController::loadControllerInfo(0, ctrlOne) &&
             BTController::loadControllerInfo(1, ctrlTwo)) {
             G2D::FontSetStyle(1.f, TEXT_COLOUR, INTRAFONT_ALIGN_CENTER);  
@@ -84,8 +82,7 @@ namespace GUI {
                 G2D::DrawRect((480 / 2) - (confirm_width / 2) - 5, (180 - (font->texYSize - 15)) - 5, confirm_width + 10, (font->texYSize - 5) + 10, SELECTOR_COLOUR);
                 G2D::DrawText(480 / 2, (192 - (font->texYSize - 15)) - 3, "Press START to continue.");
 
-                if(BTController::IsButtonHeld(0, BT_BUTTON_X)) {
-               // if(BTController::IsMiscPressed(0, BT_MISC_BUTTON_START) || BTController::IsMiscPressed(1, BT_MISC_BUTTON_START)) {
+                if(BTController::IsMiscPressed(0, BT_MISC_BUTTON_START) || BTController::IsMiscPressed(1, BT_MISC_BUTTON_START)) {
                     mainState.state = MAIN_STATE_DEMO_SELECT;
                     BTController::disablePairing();
                     newConnectionsEnabled = 0;
