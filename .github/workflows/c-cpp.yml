@@ -32,10 +32,10 @@ jobs:
       with:
         name: PSPBluetoothTechDemo
         path: PSPBluetoothTechDemo/
-    
-    - name: Zip build folder
-      run: |
-        zip -r PSPBluetoothTechDemo.zip PSPBluetoothTechDemo
+
+    - uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r PSPBluetoothTechDemo.zip PSPBluetoothTechDemo
 
     - name: Release
       uses: softprops/action-gh-release@v2
