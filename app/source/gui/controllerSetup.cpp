@@ -82,7 +82,7 @@ namespace GUI {
                 G2D::DrawRect((480 / 2) - (confirm_width / 2) - 5, (180 - (font->texYSize - 15)) - 5, confirm_width + 10, (font->texYSize - 5) + 10, SELECTOR_COLOUR);
                 G2D::DrawText(480 / 2, (192 - (font->texYSize - 15)) - 3, "Press START to continue.");
 
-                if(BTController::IsMiscPressed(0, BT_MISC_BUTTON_START) || BTController::IsMiscPressed(1, BT_MISC_BUTTON_START)) {
+                if(BTController::IsButtonPressed(0, BT_BUTTON_X) || BTController::IsMiscPressed(0, BT_MISC_BUTTON_START) || BTController::IsMiscPressed(1, BT_MISC_BUTTON_START)) {
                     mainState.state = MAIN_STATE_DEMO_SELECT;
                     BTController::disablePairing();
                     newConnectionsEnabled = 0;

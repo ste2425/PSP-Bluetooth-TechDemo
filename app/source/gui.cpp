@@ -44,6 +44,13 @@ namespace GUI {
 
             g2dClear(BG_COLOUR);
 
+
+               /* int misc = BTController::IsMiscHeld(0, BT_MISC_BUTTON_START);
+
+                static char misStr[10];
+                std::snprintf(misStr, 10, "misc: %d", misc);
+
+                G2D::DrawText(180, 160, misStr);*/
             switch(mainState.state) {
                 case MAIN_STATE_GAME:
                     GUI::MainGameLoop(delta, mainState);

@@ -17,6 +17,9 @@ namespace GUI
         G2D::DrawText(480 / 2, 100, "It is possible to control the player count LED\n"
                                     "Press X to cycle the numbers.");
 
+        G2D::FontSetStyle(1.f, GREEN, INTRAFONT_ALIGN_CENTER);  
+        G2D::DrawText(480 / 2, 250, "Press START to return to menu.");
+
         if (BTController::IsButtonPressed(0, BT_BUTTON_X)) {
             playerLEDValue++;
             BTController::setPlayerLED(0, playerLEDValue & 0x0f);

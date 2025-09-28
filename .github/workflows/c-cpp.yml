@@ -3,6 +3,7 @@ name: C/C++ CI
 on:
   push:
     branches: [ next ]
+    tags: '**' # Trigger on tags for releases
   pull_request:
     branches: [ next ]
 
@@ -22,12 +23,23 @@ jobs:
 
     - name: Prepare artifact folder
       run: |
-        mkdir -p CMFileManagerPSP
-        cp fs_driver/fs_driver.prx CMFileManagerPSP/
-        cp sio_driver/sio_driver.prx CMFileManagerPSP/
-        cp app/EBOOT.PBP CMFileManagerPSP/
+        mkdir -p PSPBluetoothTechDemo
+        cp fs_driver/fs_driver.prx PSPBluetoothTechDemo/
+        cp sio_driver/sio_driver.prx PSPBluetoothTechDemo/
+        cp app/EBOOT.PBP PSPBluetoothTechDemo/
 
     - uses: actions/upload-artifact@v4
       with:
-        name: CMFileManagerPSP
-        path: CMFileManagerPSP/
+        name: PSPBluetoothTechDemo
+        path: PSPBluetoothTechDemo/
+    
+    - name: Zip build folder
+      run: |
+        zip -r PSPBluetoothTechDemo.zip PSPBluetoothTechDemo
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag'
+      with:
+        prerelease: true
+        files: PSPBluetoothTechDemo.zip

@@ -23,8 +23,6 @@ namespace GUI {
 
     void MainGameLoop(float delta, MainState& mainState)
     {
-            BTController::LoadControllerState();
-
             // Paddle controls
             if (BTController::IsDpadHeld(0, BT_DPAD_UP)){
                 playerOneY -= delta * 0.2f;
@@ -72,8 +70,8 @@ namespace GUI {
                 ballX >= PLAYER_ONE_X) {
                 ballX = PLAYER_ONE_X + PADDLE_WIDTH;
                 ballVelX = -ballVelX;                    
-                BTAnimations::StartAnimation(0);
-                BTController::SetVibration(0, 100, 180, 0, 200);
+                //BTAnimations::StartAnimation(0);
+                ////BTController::SetVibration(0, 100, 180, 0, 200);
 
                 // Add angle based on where it hit the paddle
                 float hitPos = ((ballY + BALL_HEIGHT / 2) - (playerOneY + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2);
@@ -87,7 +85,7 @@ namespace GUI {
                 ballX + BALL_WIDTH <= PLAYER_TWO_X + PADDLE_WIDTH + BALL_WIDTH) {
                 ballX = PLAYER_TWO_X - BALL_WIDTH;
                 ballVelX = -ballVelX;
-                BTController::SetVibration(1, 100, 180, 0, 200);
+                //BTController::SetVibration(1, 100, 180, 0, 200);
                 // Add angle based on where it hit the paddle
                 float hitPos = ((ballY + BALL_HEIGHT / 2) - (playerTwoY + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2);
                 ballVelY += hitPos * 0.15f;
